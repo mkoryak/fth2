@@ -2,6 +2,8 @@ const doc = document;
 const win = window;
 const body = document.body;
 
+export const iter = (arr) => Array.prototype.slice.call(arr);
+export const crel = (name) => document.createElement(name);
 
 export class StyleSheet {
     constructor() {
@@ -30,6 +32,28 @@ export class StyleSheet {
 }
 
 
+export const fps = (fn, rate) => {
+    let triggered = false;
+    let lastArgs = [];
+
+    const act = () => {
+        triggered = false;
+        fn(...lastArgs);
+    };
+
+    const tick = rate < 60 ?
+        () => setTimeout(act, 1000 / rate) :
+        () => window.requestAnimationFrame(act);
+
+    return (...args) => {
+        lastArgs = args;
+
+        if (!triggered) {
+            triggered = true;
+            tick();
+        }
+    };
+};
 
 export const scrollbarWidth = () => {
     const d = document.createElement("scrolltester");

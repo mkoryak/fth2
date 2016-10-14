@@ -5,6 +5,7 @@ export class PositionController {
         this.ft = ft;
         this.el = el;
         this.options = options;
+        this.update();
         this.init();
     }
 
@@ -26,7 +27,7 @@ export class PositionController {
         return offset;
     };
 
-    offset(elem) {
+    static getOffset(elem) {
         let offset = 0;
         do {
             offset += elem.offsetTop;
@@ -35,12 +36,19 @@ export class PositionController {
         return offset;
     }
 
+    update() {
+        // called on reflow
+        this.tableOffset = PositionController.getOffset(this.el.table);
+        this.headerHeight = this.el.getHeaderHeight();
+    }
+
     //////// implement these 3 things
     init() {
         throw new Error('unimplemented');
     }
 
     getPosition(event) {
+        // called on scroll and resize
         throw new Error('unimplemented');
     }
 
@@ -75,9 +83,8 @@ export class AbsolutePositionController extends PositionController {
         return 'absolute';
     }
 
-
     getPosition(event) {
-        if (event.type !== 'scroll') return;
+
 
         let target = event.currentTarget;
         target = target === document ? document.childNodes[0] : target;
@@ -85,25 +92,21 @@ export class AbsolutePositionController extends PositionController {
 
         let top = 0;
         let left = 0;
-        let floating = false;
+        let position = 'above';
 
         const {top: tableTop, height: tableHeight} = this.el.table.getBoundingClientRect();
         const scrollTop = window.pageYOffset;
 
         if (tableTop < 0) {
-            top = scrollTop - this.offset(this.el.table);
-            floating = true;
+            top = scrollTop - this.tableOffset;
+            position = 'inside';
         }
-        if (tableHeight - top < 0) { //TODO: subtract header height from tableHeight
-            floating = false;
+        if (tableHeight - top - this.headerHeight < 0) {
+            position = 'below';
+            top = tableHeight - this.headerHeight;
         }
 
-        console.log('table top', top);
-        console.log('scroll top', scrollTop);
-        console.log('offset', this.offset(this.el.table));
-        console.log('tableHeight', tableHeight);
-
-        return {top, left, floating};
+        return {top, left, position};
     }
 }
 
@@ -121,6 +124,8 @@ export class FixedPositionController extends PositionController {
     static get name() {
         return 'fixed';
     }
+
+
 
     getPosition(event) {
 

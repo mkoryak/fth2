@@ -32,6 +32,7 @@ style.add('fth-container', {
     'display': 'block',
     'margin-top': 0,
     'overflow': 'auto',
+    'will-change': 'transform',
     'z-index': 1001 //should come from options
 });
 
@@ -97,6 +98,13 @@ class TableController {
         this.controller = new controllerCls(this.el, this.ft, this.options);
 
 
+        this.render = fps(this.render.bind(this));
+
+        this.last = {
+            top: null,
+            left: null,
+            position: null
+        }
     }
 
     floatHeader() {
@@ -151,8 +159,10 @@ class TableController {
         // kind of weird.
         const widths = this.el.getColumnWidths();
 
+        this.ft.setWidth(this.el.tableWidth);
         this.ft.setColumnWidths(widths);
         this.el.setColumnWidths(widths);
+
 
         if (nowFloating) {
             this.floatHeader();
@@ -160,12 +170,25 @@ class TableController {
         return this;
     }
 
-    updatePosition(event) {
-        const {top, left, floating} = this.controller.getPosition(event);
+    reflow() {
+        this.syncColumns();
+        this.controller.update();
+        const currentTarget = this.scrollContainer ? this.scrollContainer : document;
+        this.updatePosition({type: 'reflow', currentTarget});
+    }
 
-        console.log('pos is (left, top):', left, top, floating);
+    //this function is running inside of requestAnimationFrame, it cannot return anything
+    render(event) {
+        const pos = this.controller.getPosition(event);
 
-        var transform = `translateX(${left}px) translateY(${top}px)`;
+        if (this.last.top === pos.top && this.last.left === pos.left) {
+            return;
+        }
+        const {top, left, position} = this.last = pos;
+
+        console.log('2pos is (left, top):', left, top, position);
+
+        const transform = `translateX(${ left }px) translateY(${ top }px)`;
         css(this.ft.container, {
             '-webkit-transform' : transform,
             '-moz-transform'    : transform,
@@ -173,8 +196,11 @@ class TableController {
             '-o-transform'      : transform,
             'transform'         : transform
         });
+    }
 
-
+    updatePosition(event) {
+        console.log('1pos is (left, top):');
+        this.render(event);
     }
 
     handleEvent(event) {
@@ -220,7 +246,7 @@ export default class FloatThead {
         this.manager = new TableController(this.el, this.options);
 
 
-        window.document.addEventListener('scroll', this.manager, false);
+        document.addEventListener('scroll', this.manager, false);
         window.addEventListener('resize', this.manager, false);
 
         if (this.scrollContainer) {
@@ -229,7 +255,7 @@ export default class FloatThead {
 
         setTimeout(() => {
             this.manager.syncColumns().floatHeader();
-        }, 5000)
+        }, 1000)
 
     }
 

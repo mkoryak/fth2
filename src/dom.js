@@ -32,7 +32,7 @@ export class StyleSheet {
 }
 
 
-export const fps = (fn, rate) => {
+export const fps = (fn) => {
     let triggered = false;
     let lastArgs = [];
 
@@ -41,16 +41,11 @@ export const fps = (fn, rate) => {
         fn(...lastArgs);
     };
 
-    const tick = rate < 60 ?
-        () => setTimeout(act, 1000 / rate) :
-        () => window.requestAnimationFrame(act);
-
     return (...args) => {
         lastArgs = args;
-
         if (!triggered) {
             triggered = true;
-            tick();
+            window.requestAnimationFrame(act);
         }
     };
 };

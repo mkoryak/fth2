@@ -86,6 +86,15 @@ export class Table extends ColumnTable {
         return headerHeight;
     }
 
+    get tableWidth() {
+        return this.table.clientWidth
+            + parseInt(css(this.table, 'border-left-width'))
+            + parseInt(css(this.table, 'border-right-width'))
+    }
+
+
+
+
 }
 
 export class FloatTable extends ColumnTable {
@@ -97,7 +106,7 @@ export class FloatTable extends ColumnTable {
         //wrap the table in a container
         table.insertAdjacentElement('beforebegin', this.container);
         this.container.appendChild(table);
-        
+
 
         table.createTHead().insertAdjacentHTML('beforeend', '<fth-tr class="fth-placeholder"></fth-tr>');
 
@@ -128,6 +137,10 @@ export class FloatTable extends ColumnTable {
         placeholderRow.style.height = `${ height }px`;
         placeholderRow.innerHTML =
             `<fth-td style='height: ${ this.headerHeight }px'></fth-td>`.repeat(this.columnCount);
+    }
+
+    setWidth(width){
+        css(this.container, {width});
     }
 
     // i am not sure this method should live here or that this class should know about this.$

@@ -38,7 +38,8 @@ style.add('fth-container', {
 
 style.add('fth-container.fth-position-fixed', {
     'position': 'fixed',
-    'top': 'auto'
+    'top': '0',
+    'left': '0'
 });
 
 style.add('fth-container.fth-position-absolute', {
@@ -186,7 +187,7 @@ class TableController {
         }
         const {top, left, position} = this.last = pos;
 
-        console.log('2pos is (left, top):', left, top, position);
+  //      console.log('2pos is (left, top):', left, top, position);
 
         const transform = `translateX(${ left }px) translateY(${ top }px)`;
         css(this.ft.container, {
@@ -199,7 +200,7 @@ class TableController {
     }
 
     updatePosition(event) {
-        console.log('1pos is (left, top):');
+  //      console.log('1pos is (left, top):');
         this.render(event);
     }
 

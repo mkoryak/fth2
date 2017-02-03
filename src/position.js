@@ -87,7 +87,7 @@ export class AbsolutePositionController extends PositionController {
 
 
         let target = event.currentTarget;
-        target = target === document ? document.childNodes[0] : target;
+        target = (target === document ? document.childNodes[0] : target);
 
 
         let top = 0;
@@ -101,7 +101,7 @@ export class AbsolutePositionController extends PositionController {
             top = scrollTop - this.tableOffset;
             position = 'inside';
         }
-        if (tableHeight - top - this.headerHeight < 0) {
+        if (tableHeight - top - this.headerHeight <= 0) {
             position = 'below';
             top = tableHeight - this.headerHeight;
         }
@@ -115,7 +115,8 @@ export class FixedPositionController extends PositionController {
     init() {
 
         //////////// dom element setup
-        this.el.table.insertAdjacentElement('afterend', this.ft.table);
+        // maybe this isnt actaully needed?!
+      //  this.el.table.insertAdjacentElement('afterend', this.ft.table);
 
         //////////// dom attribute setup
         this.ft.container.classList.add('fth-position-fixed');
@@ -128,6 +129,32 @@ export class FixedPositionController extends PositionController {
 
 
     getPosition(event) {
+        let target = event.currentTarget;
+        target = (target === document ? document.childNodes[0] : target);
 
+        const {top: tableTop, left: tableLeft, height: tableHeight} = this.el.table.getBoundingClientRect();
+
+        let top = 0;
+        let left = tableLeft;
+        let position = 'above';
+
+        const scrollTop = window.pageYOffset;
+
+        if (tableTop <= 0) {
+            top = 0;
+            position = 'inside';
+        }
+        if (tableTop > 0) {
+            top = tableTop;
+            position = 'above';
+        }
+
+        const underTheTable = this.tableOffset + tableHeight - (scrollTop + this.headerHeight);
+        if (underTheTable <= 0) {
+            position = 'below';
+            top = underTheTable;
+        }
+
+        return {top, left, position};
     }
 }

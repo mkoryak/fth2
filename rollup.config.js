@@ -17,5 +17,5 @@ export default {
 			}
 		})
 	],
-	sourceMap: true
+	sourceMap: false
 };

@@ -69,21 +69,32 @@ export class Table extends ColumnTable {
     }
 
     getHeaderHeight() {
-        let headerHeight = iter(this.head.children)
-            .filter(cell => cell.nodeName === 'TR' && cell.offsetWidth)
-            .reduce((acc, cell) => {
-                return acc + cell.offsetHeight;
-            }, 0);
+        if (true) {
+            const bs = css(this.table, 'border-spacing');
+            const vbs = (bs ? parseInt(bs.split(' ')[0]) : 0) * 2;
+            const {height} = this.head.getBoundingClientRect();
+            const h = height - vbs;
+            return h;
+        } else {
+            // So far the above works pretty well, lets try to keep it
 
-        if (css(this.table, 'border-collapse') === 'collapse') {
-            const tableBorderTopHeight = parseInt(css(this.table, 'border-top-width'));
-            const firstCell = this.head.children[0].children[0];
-            const cellBorderTopHeight = parseInt(css(firstCell, 'border-top-width'));
-            if(tableBorderTopHeight > cellBorderTopHeight) {
-                headerHeight -= (tableBorderTopHeight / 2);
+            let headerHeight = iter(this.head.children)
+                .filter(cell => cell.nodeName === 'TR' && cell.offsetWidth)
+                .reduce((acc, cell) => {
+                    return acc + cell.offsetHeight;
+                }, 0);
+            // this isnt right - we might want to use outerheight instead of this
+
+            if (css(this.table, 'border-collapse') === 'collapse') {
+                const tableBorderTopHeight = parseInt(css(this.table, 'border-top-width'));
+                const firstCell = this.head.children[0].children[0];
+                const cellBorderTopHeight = parseInt(css(firstCell, 'border-top-width'));
+                if (tableBorderTopHeight > cellBorderTopHeight) {
+                    headerHeight -= (tableBorderTopHeight / 2);
+                }
             }
+            return headerHeight;
         }
-        return headerHeight;
     }
 
     get tableWidth() {

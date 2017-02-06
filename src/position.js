@@ -39,7 +39,7 @@ export class PositionController {
     update() {
         // called on reflow
         this.tableOffset = PositionController.getOffset(this.el.table);
-        this.headerHeight = this.el.getHeaderHeight();
+        this.headerHeight = this.ft.table.getBoundingClientRect().height;
     }
 
     //////// implement these 3 things
@@ -83,12 +83,7 @@ export class AbsolutePositionController extends PositionController {
         return 'absolute';
     }
 
-    getPosition(event) {
-
-
-        let target = event.currentTarget;
-        target = (target === document ? document.childNodes[0] : target);
-
+    getPosition(target) {
 
         let top = 0;
         let left = 0;
@@ -128,28 +123,32 @@ export class FixedPositionController extends PositionController {
 
 
 
-    getPosition(event) {
-        let target = event.currentTarget;
-        target = (target === document ? document.childNodes[0] : target);
+    getPosition(target) {
 
-        const {top: tableTop, left: tableLeft, height: tableHeight} = this.el.table.getBoundingClientRect();
+        const {top: tableTop, left: tableLeft, bottom: tableBottom} = this.el.table.getBoundingClientRect();
+
+        // TODO: this check can go outside of this class and into a super class or manager
+        if (tableBottom < 0) {
+            return {position: 'unfloat'}; //table above viewport
+        }
+        if (tableTop > window.innerHeight) {
+            return {position: 'unfloat'}; //table below viewport
+        }
 
         let top = 0;
         let left = tableLeft;
         let position = 'above';
-
-        const scrollTop = window.pageYOffset;
 
         if (tableTop <= 0) {
             top = 0;
             position = 'inside';
         }
         if (tableTop > 0) {
-            top = tableTop;
-            position = 'above';
+            top = tableTop; //above the table
+            position = 'unfloat';
         }
 
-        const underTheTable = this.tableOffset + tableHeight - (scrollTop + this.headerHeight);
+        const underTheTable = tableBottom - this.headerHeight;
         if (underTheTable <= 0) {
             position = 'below';
             top = underTheTable;

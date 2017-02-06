@@ -36,6 +36,14 @@ style.add('fth-container', {
     'z-index': 1001 //should come from options
 });
 
+style.add('fth-container.fth-floating', {
+    'display': 'block'
+});
+
+style.add('fth-container fth-tfoot', {
+    'display': 'none' //ftfoot is an artifact of inheritance, not used there
+});
+
 style.add('fth-container.fth-position-fixed', {
     'position': 'fixed',
     'top': '0',
@@ -109,9 +117,9 @@ class TableController {
     }
 
     floatHeader() {
-        const layoutFixed = {'table-layout': 'fixed'};
-
         if (!this.floating) {
+            const layoutFixed = {'table-layout': 'fixed'};
+
             this.floating = true;
 
             css(this.el.table, layoutFixed);
@@ -123,14 +131,16 @@ class TableController {
             this.el.setHeader(this.ft.head);
             // move real thead into floating table, colgroup must be first
             this.ft.setHeader(this.el.head);
+            this.ft.container.classList.add('fth-floating');
         }
         return this;
     }
 
     unfloatHeader() {
-        const layoutOriginal = {'table-layout': this.el.originalStyle['table-layout']};
-        const minWidth = this.el.originalStyle['min-width'];
         if (this.floating) {
+            const layoutOriginal = {'table-layout': this.el.originalStyle['table-layout']};
+            const minWidth = this.el.originalStyle['min-width'];
+
             this.floating = false;
 
             // move placeholder thead back into floating table
@@ -138,13 +148,13 @@ class TableController {
             // move real thead back into original table
             this.el.setHeader(this.el.head);
 
-            this.el.resetColumns();
-            this.ft.resetColumns();
+            // todo: there was a reset of columns here.. i removed it
 
             css(this.el.table, layoutOriginal);
             css(this.ft.table, layoutOriginal);
 
             minWidth && css(this.el.table, {'min-width': minWidth});
+            this.ft.container.classList.remove('fth-floating');
         }
         return this;
     }
@@ -154,6 +164,9 @@ class TableController {
         if (nowFloating) {
             this.unfloatHeader();
         }
+
+        this.el.resetColumns();
+        this.ft.resetColumns();
 
         this.ft.columnCount = this.el.updateColumnCount();
         // you get widths from one element and set them on another, which is why this looks
@@ -175,17 +188,25 @@ class TableController {
         this.syncColumns();
         this.controller.update();
         const currentTarget = this.scrollContainer ? this.scrollContainer : document;
-        this.updatePosition({type: 'reflow', currentTarget});
+        this.render(currentTarget);
+        return this;
     }
 
     //this function is running inside of requestAnimationFrame, it cannot return anything
-    render(event) {
+    render(target) {
+        target = ((!target || target === document) ? document.childNodes[0] : target);
         const pos = this.controller.getPosition(event);
 
         if (this.last.top === pos.top && this.last.left === pos.left) {
             return;
         }
         const {top, left, position} = this.last = pos;
+
+        if (position === 'unfloat') {
+            return this.unfloatHeader();
+        } else {
+            this.floatHeader();
+        }
 
   //      console.log('2pos is (left, top):', left, top, position);
 
@@ -197,11 +218,11 @@ class TableController {
             '-o-transform'      : transform,
             'transform'         : transform
         });
+        return this;
     }
 
     updatePosition(event) {
-  //      console.log('1pos is (left, top):');
-        this.render(event);
+        return this.render(event.currentTarget);
     }
 
     handleEvent(event) {
@@ -255,8 +276,8 @@ export default class FloatThead {
         }
 
         setTimeout(() => {
-            this.manager.syncColumns().floatHeader();
-        }, 1000)
+            this.manager.reflow();
+        }, 1500)
 
     }
 
